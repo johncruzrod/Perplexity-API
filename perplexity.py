@@ -20,6 +20,17 @@ def call_api(model_name, conversation_messages):
     else:
         return {"error": response.text}
 
+def update_messages(user_input):
+    st.session_state['messages'].append({"role": "user", "content": user_input})
+    response = call_api("sonar-medium-online", [{"role": "user", "content": user_input}])
+    if 'error' not in response:
+        assistant_reply = response['choices'][0]['message']['content']  # Adjust this according to actual API response format
+        st.session_state['messages'].append({"role": "assistant", "content": assistant_reply})
+    else:
+        st.error("Error: " + response["error"])
+    # Force a rerun to update the chat messages immediately
+    st.experimental_rerun()
+
 # Initialize the chat session
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
@@ -34,14 +45,4 @@ for message in st.session_state['messages']:
 # Input for new messages
 user_input = st.chat_input("Ask something...")
 if user_input:
-    st.session_state['messages'].append({"role": "user", "content": user_input})
-    # API call
-    response = call_api("sonar-medium-online", [
-        {"role": "user", "content": user_input}
-    ])
-    if 'error' not in response:
-        assistant_reply = response['choices'][0]['message']['content']  # Adjust according to actual API response format
-        st.session_state['messages'].append({"role": "assistant", "content": assistant_reply})
-    else:
-        st.error("Error: " + response["error"])
-
+    update_messages(user_input)
